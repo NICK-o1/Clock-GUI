@@ -43,12 +43,21 @@ date_font = get_font(date_font_name, date_font_size)
 transparency = float(config["THEME"].get("transparency", 1.0))
 always_on_top = config["THEME"].getboolean("always_on_top", True)
 
-# ---------------- RANDOM UNSPLASH BACKGROUND ---------------- #
+# ---------------- BACKGROUND LOADER ---------------- #
 
-def load_random_background():
+def load_background():
+    mode = config["THEME"].get("background_mode", "image")
+
+    if mode == "color":
+        # Solid color background
+        color = config["THEME"].get("background_color", "#000000")
+        background_label.config(image="", bg=color)
+        background_label.image = None
+        return
+
+    # Otherwise load image
     try:
-        url = "https://picsum.photos/1920/1080"
-
+        url = config["THEME"].get("background_url", "https://picsum.photos/1920/1080")
         with urllib.request.urlopen(url) as response:
             data = response.read()
 
@@ -57,7 +66,7 @@ def load_random_background():
 
         bg_image = ImageTk.PhotoImage(img)
         background_label.config(image=bg_image)
-        background_label.image = bg_image  # prevent garbage collection
+        background_label.image = bg_image
 
     except Exception as e:
         print("Error loading background:", e)
@@ -74,9 +83,10 @@ def update_clock():
 
     randomize_colors()
 
-    # Change background every 10 seconds
-    if int(now.strftime("%S")) % 10 == 0:
-        load_random_background()
+    # Change background every 10 seconds (only in image mode)
+    if config["THEME"].get("background_mode", "image") == "image":
+        if int(now.strftime("%S")) % 10 == 0:
+            load_background()
 
     root.after(1000, update_clock)
 
@@ -122,9 +132,9 @@ root.attributes("-topmost", always_on_top)
 root.attributes("-alpha", transparency)
 root.config(bg=bg_color)
 
-# Time + Date labels
-time_label = tk.Label(root, font=time_font, fg=time_color, bg=bg_color)
-date_label = tk.Label(root, font=date_font, fg=date_color, bg=bg_color)
+# Time + Date labels (transparent background)
+time_label = tk.Label(root, font=time_font, fg=time_color, bg="Black")
+date_label = tk.Label(root, font=date_font, fg=date_color, bg="Black")
 
 # Center them
 time_label.place(relx=0.5, rely=0.45, anchor="center")
@@ -137,7 +147,7 @@ for widget in (time_label, date_label):
     widget.bind("<B1-Motion>", do_move)
 
 # Load first background
-load_random_background()
+load_background()
 
 # Start clock
 update_clock()
